@@ -1,94 +1,34 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var MongoClient = require('mongodb').MongoClient;
-var ObjectID = require('mongodb').ObjectID;
+var ObjectID = require('mongodb').ObjectID
+var db = require('./db');
+var artistsController = require('./controllers/artists');
 
 var app = express();
-var db;
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-var artists = [
-    {
-        id: 1,
-        name: 'Metallica'
-    },
-    {
-        id: 2,
-        name: 'Iron Maiden'
-    },
-    {
-        id: 3,
-        name: 'Deep Purple'
-    }
-];
+app.get('/', function (req, res) {
+  res.send('Hello API');
+})
 
-app.get('/', function(req, res) {
+app.get('/artists', artistsController.all);
 
-    res.send('Hello API');
-});
+app.get('/artists/:id', artistsController.findById);
 
-// Get All Artists
-app.get('/artists', function (req, res) {
-    db.collection('artists').find().toArray(function (err, docs) {
-        if (err) {
-            console.log(err);
-            return res.sendStatus(500);
-        }
-        res.send(docs);
-    });
-});
-// Get One Artist
-app.get('/artists/:id', function (req, res) {
-    db.collection('artists').findOne({_id: ObjectID(req.params.id)}, function (err, docs) {
-        if (err) {
-            console.log(err);
-            return res.sendStatus(500);
-        }
-        res.send(docs);
-    });
-});
+app.post('/artists', artistsController.create);
 
-app.post('/artists', function (req, res) {
-    var artist = {
-        id: Date.now(),
-        name: req.body.name
-    };
+app.put('/artists/:id', artistsController.update);
 
-    db.collection('artists').insert(artist, function (err, result) {
-        if (err) {
-            console.log(err);
-            return res.sendStatus(500);
-        }
-        res.send(artist);
-    });
-});
+app.delete('/artists/:id', artistsController.delete);
 
-app.put('/artists/:id', function (req, res) {
-   var artist = artists.find(function (artist) {
-       return artist.id === Number(req.params.id);
-   });
-   artist.name = req.body.name;
-   res.sendStatus(200);
-
-});
-
-app.delete('/artists/:id', function (req, res) {
-    artists = artists.filter(function (artist) {
-       return artist.id !== Number(req.params.id);
-    });
-
-    res.sendStatus(200);
-});
-
-
-MongoClient.connect('mongodb://localhost:27017/myapi', function (err, database) {
-    if (err) {
-        return console.log(err);
-    }
-    db = database;
-    app.listen(3012, function () {
-        console.log('API app started on 3012');
-    });
-});
+db.connect('mongodb://localhost:27017/api', function (err) {
+  if (err) {
+    return console.log(err);
+  }
+  app.listen(3012, function () {
+    console.log('API app started');
+  })
+})
